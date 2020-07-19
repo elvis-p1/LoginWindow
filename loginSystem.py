@@ -1,7 +1,7 @@
 from tkinter import *
 import hashlib 
 
-
+# main class
 class loginService:
 
     # The main log in window is created and launched upon initialization
