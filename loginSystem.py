@@ -4,27 +4,27 @@ import hashlib
 
 class loginService:
 
-    # The main window is created and launched upon initialization
+    # The main log in window is created and launched upon initialization
     def __init__(self, master):
 
         frame = Frame(master, height=10, width=50)
         frame.grid()
 
         # Title label
-        label_title = Label(text = "Login Service")
+        label_title = Label(text = "Login Service", font="Helvetica 10")
         label_title.grid(row = 1,columnspan = 2)
 
         # Username label and text entry
         label_user = Label(text="Username")
-        label_user.grid(row=2)
+        label_user.grid(row=2, sticky=E)
         self.entry_user = Entry()
-        self.entry_user.grid(row=2, column=1)
+        self.entry_user.grid(row=2, column=1, sticky=E)
 
         # Password label and entry
         label_password = Label(text="Password")
         label_password.grid(row=3,sticky=E)
         self.entry_password = Entry(show="●")
-        self.entry_password.grid(row=3, column=1)
+        self.entry_password.grid(row=3, column=1, sticky=E)
 
         # Button to login
         button_login = Button(text="Login",command=self.login)
@@ -38,13 +38,11 @@ class loginService:
         button_register = Button(text="Register", command=self.register_window)
         button_register.grid(row = 5, column = 2)
 
-        # Checkbox to stay logged in
-        # self.stay_status = IntVar() # checks if the checkbox is ticked (1) or not (0)
-        # stay_check = Checkbutton(master,text = "", variable=self.stay_status, activebackground="#C6C6C6")
-        # stay_check.grid(row = 4,column=0, sticky=E)
-        # label_check = Label(master, text = "Stay logged in")
-        # label_check.grid(row = 4, column = 1, sticky=W)
-        
+        # Credentials stay there after log out
+        self.var_remember = IntVar()
+        checkbutton_remember = Checkbutton(root, text="Remember login", variable=self.var_remember)
+        checkbutton_remember.grid(row=6)
+
     # The function will convert credentials to secure hashes so they cannot just be read in the text file    
     def hasher(self, credential):
         en = credential.encode("utf-8")
@@ -52,18 +50,17 @@ class loginService:
 
     # Check for correct username and password combo
     def login(self):
-        
         cred_list = self.write(do="result")
         # print(str(cred_list) + " " + str(len(cred_list)))
 
         entry_hashedUser = self.hasher(self.entry_user.get())
         entry_hashedPass = self.hasher(self.entry_password.get())
 
-        login_status = StringVar()
-        login_status.set(" ")
+        self.login_status = StringVar()
+        self.login_status.set(" ")
 
         w = 25 # width of widgets
-        self.bottom_login_text = Label(root, textvariable=login_status, width=w)
+        self.bottom_login_text = Label(root, textvariable=self.login_status, width=w)
         
         # Check through the contents of the text file
         # Lines in even indexes are usernames while passwords are in the odd indexes
@@ -77,56 +74,56 @@ class loginService:
                         # and match it to the entered password
                         if entry_hashedPass == cred_list[i+1]:
                             self.logged_window(self.entry_user.get())
-                            login_status.set("")
-                            # Check the status of the checkbox
-                            # If checked, stay logged in even after closing the window
-                            # If unchecked, automatically log out upon closing
-                            # if self.stay_logged():
-                            #     pass
-                            # else:
-                            #     pass
-                            login_status.set("Log in success")
-                            self.bottom_login_text = Label(root, textvariable=login_status, fg="green", width=w)
+                            self.login_status.set("Log in success")
+                            self.bottom_login_text = Label(root, textvariable=self.login_status, fg="green", width=w)
                             break
                         # If the username is right but password is wrong, break
                         else: 
-                            login_status.set("Log in failed")
-                            self.bottom_login_text = Label(root, textvariable=login_status, fg="red", width=w)
+                            self.login_status.set("Log in failed")
+                            self.bottom_login_text = Label(root, textvariable=self.login_status, fg="red", width=w)
                             break
                 # If the whole list is searched and the username is still not found
                 elif i == len(cred_list)-1:
-                        login_status.set("Log in failed (user DNE)")
-                        self.bottom_login_text = Label(root, textvariable=login_status, fg="red", width=w)    
+                        self.login_status.set("Log in failed (user DNE)")
+                        self.bottom_login_text = Label(root, textvariable=self.login_status, fg="red", width=w)    
         else:
-            login_status.set("No users registered (Register now!)")
-            self.bottom_login_text = Label(root, textvariable=login_status, fg="blue", width=w)
-        self.bottom_login_text.grid(row=6, columnspan=2)
-
-    # On successful login, if the checkbox is checked, the user does not have to log in next time
-    def stay_logged(self):
-        if self.stay_status.get() == 1: # box is checked
-            return True
-        else: # box is unchecked
-            return False  
+            self.login_status.set("No users registered (Register now!)")
+            self.bottom_login_text = Label(root, textvariable=self.login_status, fg="blue", width=w)
+        self.bottom_login_text.grid(row=7, columnspan=2)
 
     # Window that shows up once you log in successfully
     def logged_window(self, user):
 
-        accWindow = Toplevel(root)
-        accWindow.resizable(False,False)
-        accWindow.title("Account Window")
+        self.accWindow = Toplevel(root)
+        self.accWindow.resizable(False,False)
+        self.accWindow.title("Account Window")
 
         # Welcome message that includes your username that you logged in with
-        label_welcome = Label(accWindow, text="Welcome", font=("Helvetica", 14))
+        label_welcome = Label(self.accWindow, text="Welcome", font=("Helvetica", 14))
         label_welcome.grid()
-        label_usernamedisplay = Label(accWindow, text = user, font=('Helvetica', 18, 'bold'), fg="brown")
+        label_usernamedisplay = Label(self.accWindow, text = user, font=('Helvetica', 18, 'bold'), fg="brown")
         label_usernamedisplay.config(anchor=CENTER)
-        label_usernamedisplay.grid(row=1,)
+        label_usernamedisplay.grid(row=1)
 
         # Button to log out
-        button_logout = Button(accWindow, text="Log Out", fg = "red", command=accWindow.destroy)
+        button_logout = Button(self.accWindow, text="Log Out", fg = "red", command=self.logout_button)
         button_logout.grid(row=2, column=2)
+        
 
+    def logout_button(self):
+        
+        # if the remember credential box is unchecked
+        if self.var_remember.get() == 0: 
+            self.entry_user.delete(0,END) # clear the username field
+            self.entry_password.delete(0,END) # clear the password field
+
+        # Update status on log out
+        self.login_status.set("Log out successful")
+        self.bottom_login_text = Label(root, textvariable=self.login_status, fg="blue")
+        self.bottom_login_text.grid(row=7, columnspan=2)
+
+        self.accWindow.destroy()
+        
     # This function writes the information to a file to store it if the credentials are good
     # The username and password must be at least 8 characters long
     # The username cannot match another existing username, the user must enter the password twice in the fields
