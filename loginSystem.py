@@ -1,7 +1,7 @@
 from tkinter import *
 import hashlib 
+import shelve
 
-# main class
 class loginService:
 
     # The main log in window is created and launched upon initialization
@@ -23,7 +23,7 @@ class loginService:
         # Password label and entry
         label_password = Label(text="Password")
         label_password.grid(row=3,sticky=E)
-        self.entry_password = Entry(show="●")
+        self.entry_password = Entry()
         self.entry_password.grid(row=3, column=1, sticky=E)
 
         # Button to login
@@ -38,18 +38,65 @@ class loginService:
         button_register = Button(text="Register", command=self.register_window)
         button_register.grid(row = 5, column = 2)
 
-        # Credentials stay there after log out
+        # Credentials stay there after log out if it is checked
         self.var_remember = IntVar()
         checkbutton_remember = Checkbutton(root, text="Remember login", variable=self.var_remember)
         checkbutton_remember.grid(row=6)
+        if self.remember():
+            user = str(self.remember(get="user"))
+            self.entry_user.insert(0,user)
+            password = str(self.remember(get="password"))
+            self.entry_password.insert(0,password)
+        else:
+            self.entry_user.delete(0,END)
+            self.entry_password.delete(0,END)
+    # This function keeps keeps the login fields filled after log out
+    # used when the checkbox is checked
+    # returns True if there is a user is being remembered
+    # returns False or no value if no user is being remembered
+    def remember(self, re=None, get=None):
+
+        s = shelve.open('r', flag='c')
+        
+        l = list(s.values())
+        if re == None:
+            if l: # contains values
+                pass
+            else: # empty
+                s.close()
+                return
+        if re == True:
+            user = self.entry_user.get()
+            password = self.entry_password.get()
+            s["user"] = user
+            s["password"] = password
+            #self.rUser = s['user'] # for use outside the function
+            #self.rPassword = s['password'] # for use outside the function
+            s["remember"] = True
+        elif re == False:
+            s["user"] = ""
+            s["password"] = ""
+            s["remember"] = False
+        
+        if get == "user":
+            return s['user']
+        elif get == "password":
+            return s['password']
+
+        state = s['remember']
+        s.close()
+        return state
+        
 
     # The function will convert credentials to secure hashes so they cannot just be read in the text file    
     def hasher(self, credential):
+
         en = credential.encode("utf-8")
         return hashlib.sha224(en).hexdigest() # return the credential as a hashed product
 
     # Check for correct username and password combo
     def login(self):
+
         cred_list = self.write(do="result")
         # print(str(cred_list) + " " + str(len(cred_list)))
 
@@ -76,6 +123,15 @@ class loginService:
                             self.logged_window(self.entry_user.get())
                             self.login_status.set("Log in success")
                             self.bottom_login_text = Label(root, textvariable=self.login_status, fg="green", width=w)
+                            
+                            # if the remember credential box is unchecked
+                            if self.var_remember.get() == 0: 
+                                self.entry_user.delete(0,END) # clear the username field
+                                self.entry_password.delete(0,END) # clear the password field
+                                self.remember(re=False)                        
+                            # if checked in 
+                            else: 
+                                self.remember(re=True)
                             break
                         # If the username is right but password is wrong, break
                         else: 
@@ -90,6 +146,8 @@ class loginService:
             self.login_status.set("No users registered (Register now!)")
             self.bottom_login_text = Label(root, textvariable=self.login_status, fg="blue", width=w)
         self.bottom_login_text.grid(row=7, columnspan=2)
+
+        
 
     # Window that shows up once you log in successfully
     def logged_window(self, user):
@@ -109,15 +167,9 @@ class loginService:
         button_logout = Button(self.accWindow, text="Log Out", fg = "red", command=self.logout_button)
         button_logout.grid(row=2, column=2)
         
-
+    # Update status on log out
     def logout_button(self):
-        
-        # if the remember credential box is unchecked
-        if self.var_remember.get() == 0: 
-            self.entry_user.delete(0,END) # clear the username field
-            self.entry_password.delete(0,END) # clear the password field
 
-        # Update status on log out
         self.login_status.set("Log out successful")
         self.bottom_login_text = Label(root, textvariable=self.login_status, fg="blue")
         self.bottom_login_text.grid(row=7, columnspan=2)
@@ -171,14 +223,15 @@ class loginService:
         # Password creation label and entry
         self.label_createPass = Label(rWindow, text="Create Password")
         self.label_createPass.grid(row=2, sticky=E)
-        self.entry_createPass = Entry(rWindow)
+        self.entry_createPass = Entry(rWindow,show="●")
         self.entry_createPass.grid(row=2, column=1, sticky=E)
 
         # Password Rememberance label and entry
         label_remPass = Label(rWindow, text="Re-enter Password")
         label_remPass.grid(row=3,sticky=E)
-        self.entry_remPass = Entry(rWindow)
+        self.entry_remPass = Entry(rWindow,show="●")
         self.entry_remPass.grid(row=3, column=1, sticky=E)
+        
         
         # Text on the bottom appears if when user succeeds/fails in making account
         self.text1 = StringVar() # the text
@@ -200,6 +253,7 @@ class loginService:
     # Returns True if the username is unique, False if it already exists
     # if do == "result", return a list of the lines in file
     def write(self, user=None, password=None, do=None):
+
         if do == "write":
             with open("creds.txt", "a+") as f:
                 f.seek(0)
