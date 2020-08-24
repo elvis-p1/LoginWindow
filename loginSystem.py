@@ -23,7 +23,7 @@ class loginService:
         # Password label and entry
         label_password = Label(text="Password")
         label_password.grid(row=3,sticky=E)
-        self.entry_password = Entry()
+        self.entry_password = Entry(show="●")
         self.entry_password.grid(row=3, column=1, sticky=E)
 
         # Button to login
@@ -50,6 +50,7 @@ class loginService:
         else:
             self.entry_user.delete(0,END)
             self.entry_password.delete(0,END)
+
     # This function keeps keeps the login fields filled after log out
     # used when the checkbox is checked
     # returns True if there is a user is being remembered
@@ -153,6 +154,7 @@ class loginService:
     def logged_window(self, user):
 
         self.accWindow = Toplevel(root)
+        self.accWindow.geometry("175x100")
         self.accWindow.resizable(False,False)
         self.accWindow.title("Account Window")
 
