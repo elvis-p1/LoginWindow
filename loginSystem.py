@@ -154,7 +154,6 @@ class loginService:
     def logged_window(self, user):
 
         self.accWindow = Toplevel(root)
-        self.accWindow.geometry("175x100")
         self.accWindow.resizable(False,False)
         self.accWindow.title("Account Window")
 
